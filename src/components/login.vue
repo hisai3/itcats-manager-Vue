@@ -58,6 +58,9 @@ export default {
                   message: res.data.meta.msg,
                   type: 'success'
                 })
+                console.log(res)
+                // 存储token值
+                localStorage.setItem('itcast_pro_token', res.data.data.token)
                 // 登录成功 跳转
                 this.$router.push({ name: 'welcome' })
               } else {

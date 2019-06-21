@@ -3,6 +3,7 @@ import VueRouter from 'vue-router'
 import Login from '@/components/login'
 import Index from '@/components/index'
 import Welcome from '@/components/welcome'
+import UserList from '@/users/users'
 Vue.use(VueRouter)
 
 var router = new VueRouter({
@@ -25,6 +26,11 @@ var router = new VueRouter({
           name: 'welcome',
           path: 'welcome',
           component: Welcome
+        },
+        {
+          name: 'userList',
+          path: 'users',
+          component: UserList
         }
       ]
     }
