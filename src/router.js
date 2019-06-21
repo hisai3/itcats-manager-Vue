@@ -2,6 +2,7 @@ import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Login from '@/components/login'
 import Index from '@/components/index'
+import Welcome from '@/components/welcome'
 Vue.use(VueRouter)
 
 var router = new VueRouter({
@@ -18,7 +19,14 @@ var router = new VueRouter({
     {
       name: 'index',
       path: '/index',
-      component: Index
+      component: Index,
+      children: [
+        {
+          name: 'welcome',
+          path: 'welcome',
+          component: Welcome
+        }
+      ]
     }
   ]
 })

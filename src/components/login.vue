@@ -29,63 +29,63 @@
 
 <script>
 // 引入users.js发送请求
-import { userLogin } from "@/api/users.js";
+import { userLogin } from '@/api/users.js'
 export default {
-  data() {
+  data () {
     return {
       loginForm: {
-        username: "admin",
-        password: "123456"
+        username: 'admin',
+        password: '123456'
       },
       rules: {
         username: [
-          { required: true, message: "请输入用户名", trigger: "blur" }
+          { required: true, message: '请输入用户名', trigger: 'blur' }
         ],
-        password: [{ required: true, message: "请输入密码", trigger: "blur" }]
+        password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
       }
-    };
+    }
   },
   methods: {
-    login() {
+    login () {
       this.$refs.loginForm.validate(valid => {
         if (valid) {
-          //验证通过
-          console.log(this.loginForm);
+          // 验证通过
           userLogin(this.loginForm)
             .then(res => {
               if (res.data.meta.status === 200) {
-                //请求成功
+                // 请求成功
                 this.$message({
                   message: res.data.meta.msg,
-                  type: "success"
-                });
-                //登录成功 跳转
-                this.$router.push({name:'index'})
+                  type: 'success'
+                })
+                // 登录成功 跳转
+                this.$router.push({ name: 'welcome' })
               } else {
                 this.$message({
                   message: res.data.meta.msg,
-                  type: "warning"
-                });
+                  type: 'warning'
+                })
               }
             })
-            .catch(err => {
-               this.$message({
-                  message: "服务器异常，请重试",
-                  type: "warning"
-                });
-            });
+            .catch((err) => {
+              console.log(err)
+              this.$message({
+                message: '服务器异常，请重试',
+                type: 'warning'
+              })
+            })
         } else {
-          //验证不通过
+          // 验证不通过
           this.$message({
-                  message: "请按合法格式输入",
-                  type: "warning"
-                });
-          return false;
+            message: '请按合法格式输入',
+            type: 'warning'
+          })
+          return false
         }
-      });
+      })
     }
   }
-};
+}
 </script>
 
 <style lang="less" scoped>
