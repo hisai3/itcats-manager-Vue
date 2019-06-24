@@ -44,7 +44,7 @@ export default {
             this.rightData = res.data.data
           }
         })
-        .catch(err => {
+        .catch(() => {
           this.$message({
             type: 'error',
             message: '服务器异常，请重试'

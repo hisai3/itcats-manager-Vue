@@ -5,6 +5,7 @@ import Index from '@/components/index'
 import Welcome from '@/components/welcome'
 import UserList from '@/users/users'
 import Right from '@/components/roles/right'
+import Roles from '@/components/roles/roles'
 Vue.use(VueRouter)
 
 var router = new VueRouter({
@@ -37,6 +38,11 @@ var router = new VueRouter({
           name: 'rightList',
           path: 'right',
           component: Right
+        },
+        {
+          name: 'rolesList',
+          path: 'roles',
+          component: Roles
         }
       ]
     }
