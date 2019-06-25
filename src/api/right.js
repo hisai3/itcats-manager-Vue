@@ -15,9 +15,16 @@ axios.interceptors.request.use(function (config) {
   // 对请求错误做些什么
   return Promise.reject(error)
 })
-
+// 获取所有权限
 export const getRightInfo = type => {
   return axios({
     url: `rights/${type}`
+  })
+}
+// 删除角色指定权限
+export const delRightById = (roleId, rightId) => {
+  return axios({
+    url: `roles/${roleId}/rights/${rightId}`,
+    method: 'delete'
   })
 }
