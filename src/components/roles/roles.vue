@@ -19,7 +19,7 @@
                 closable
                 type="success"
                 @close="handleClose(props.row,first.id)"
-                v-if="!first.children.length"
+                v-if="first.children.length"
               >{{first.authName}}</el-tag>
             </el-col>
             <el-col :span="18">
@@ -67,7 +67,7 @@
               size="mini"
               type="success"
               icon="el-icon-share"
-              @click="handleEdit(scope.$index, scope.row)"
+              @click="showGrant(scope.row)"
             ></el-button>
           </el-tooltip>
           <el-tooltip class="item" effect="dark" content="删除" placement="top">
@@ -81,16 +81,48 @@
         </template>
       </el-table-column>
     </el-table>
+    <!-- 授权弹框 -->
+    <el-dialog title="角色授权" :visible.sync="grantFormVisible">
+<!-- 树状 -->
+<el-tree class="tree"
+  ref="tree"
+  :data="rightData"
+  show-checkbox
+  node-key="id"
+  :default-expanded-keys="expandedArr"
+  :default-checked-keys="checkedArr"
+  :props="defaultProps">
+</el-tree>
+  <div slot="footer" class="dialog-footer">
+    <el-button @click="grantFormVisible = false">取 消</el-button>
+    <el-button type="primary" @click="confirmGrant()">确 定</el-button>
+  </div>
+</el-dialog>
   </div>
 </template>
 
 <script>
 // 引入roles.js
 import { getAllUserRole } from '@/api/roles.js'
-import { delRightById } from '@/api/right.js'
+import { delRightById, getRightInfo, grantRightById } from '@/api/right.js'
 export default {
   data () {
     return {
+      // 授权弹框显示隐藏
+      grantFormVisible: false,
+      // 授权弹框的默认数据
+      rightData: [],
+      // 默认选中
+      checkedArr: [],
+      // 默认展开项
+      expandedArr: [],
+      // 选项内容和下级选项
+      defaultProps: {
+        children: 'children',
+        label: 'authName'
+      },
+      // 角色id
+      roleId: '',
       rolesData: []
     }
   },
@@ -119,7 +151,6 @@ export default {
     },
     // 扩展区域的关闭标签
     handleClose (row, rightId) {
-      console.log(row, rightId)
       // 发送请求删除对应的权限
       delRightById(row.id, rightId)
         .then(res => {
@@ -132,8 +163,81 @@ export default {
             })
             // 刷新当前标签
             row.children = res.data.data
-            console.log('==========================')
-            console.log(row.children)
+          } else {
+            this.$message({
+              type: 'error',
+              message: res.data.meta.msg
+            })
+          }
+        })
+        .catch(() => {
+          this.$message({
+            type: 'error',
+            message: '服务器异常，请重试'
+          })
+        })
+    },
+    // 加载授权信息
+    showGrant (row) {
+      // 显示授权弹框
+      this.grantFormVisible = true
+      this.roleId = row.id
+      // 清空上次的默认项
+      this.checkedArr.length = 0
+      this.expandedArr.length = 0
+      // 展开 并选中当前角色所有的权限选项
+      row.children.forEach((first) => {
+        if (first.children.length > 0) {
+        // 遍历二级权限
+          this.expandedArr.push(first.id)
+          first.children.forEach(second => {
+            if (second.children.length > 0) {
+              // 遍历三级权限
+              this.expandedArr.push(second.id)
+              second.children.forEach(third => {
+                this.checkedArr.push(third.id)
+                this.expandedArr.push(third.id)
+              })
+            }
+          })
+        }
+      })
+      getRightInfo('tree')
+        .then(res => {
+          if (res.data.meta.status === 200) {
+            this.rightData = res.data.data
+          }
+        })
+        .catch(() => {
+          this.$message({
+            type: 'error',
+            message: '服务器异常，请重试'
+          })
+        })
+    },
+    // 确认提交授权
+    confirmGrant () {
+      // 获取当前权限选项的id
+      var rights = this.$refs.tree.getCheckedNodes()
+
+      var rightsId = rights.map(item => {
+        return item.id + ',' + item.pid
+      })
+      console.log(rightsId)
+      console.log(rightsId.join(',').split(','))
+      var ids = [...new Set(rightsId.join(',').split(','))]
+      console.log(ids)
+      // 发送请求确认更改
+      grantRightById(this.roleId, ids.join(','))
+        .then(res => {
+          if (res.data.meta.status === 200) {
+            this.$message({
+              type: 'success',
+              message: res.data.meta.msg
+            })
+            // 弹框隐藏
+            this.grantFormVisible = false
+          // 刷新数据 小标签
           } else {
             this.$message({
               type: 'error',
@@ -155,7 +259,9 @@ export default {
 }
 </script>
 <style lang="less" scoped>
-el-tag {
-  margin: 5px 5px 0 0;
+
+.tree{
+  height: 300px;
+  overflow: scroll;
 }
 </style>
