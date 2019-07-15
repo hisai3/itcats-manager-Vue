@@ -7,7 +7,7 @@
       <el-breadcrumb-item>角色列表</el-breadcrumb-item>
     </el-breadcrumb>
     <!-- 添加角色按钮 -->
-    <el-button type="success" plain>添加角色</el-button>
+    <el-button type="success" plain @click="addFormVisible=true">添加角色</el-button>
     <!-- 角色列表信息 -->
     <el-table :data="rolesData" style="width: 100%">
       <el-table-column type="expand">
@@ -44,7 +44,7 @@
               </el-row>
             </el-col>
           </el-row>
-          <el-row >
+          <el-row>
             <el-col :span="24" v-if="!props.row.children.length">暂无授权</el-col>
           </el-row>
         </template>
@@ -55,12 +55,7 @@
       <el-table-column label="操作">
         <template slot-scope="scope">
           <el-tooltip class="item" effect="dark" content="编辑" placement="top">
-            <el-button
-              size="mini"
-              type="info"
-              icon="el-icon-edit"
-              @click="editRole(scope.row)"
-            ></el-button>
+            <el-button size="mini" type="info" icon="el-icon-edit" @click="editRole(scope.row)"></el-button>
           </el-tooltip>
           <el-tooltip class="item" effect="dark" content="授权" placement="top">
             <el-button
@@ -75,7 +70,7 @@
               size="mini"
               type="danger"
               icon="el-icon-delete"
-              @click="delRole(scope.$index, scope.row)"
+              @click="del(scope.row)"
             ></el-button>
           </el-tooltip>
         </template>
@@ -83,19 +78,35 @@
     </el-table>
     <!-- 授权弹框 -->
     <el-dialog title="角色授权" :visible.sync="grantFormVisible">
-<!-- 树状 -->
-<el-tree class="tree"
-  ref="tree"
-  :data="rightData"
-  show-checkbox
-  node-key="id"
-  :default-expanded-keys="expandedArr"
-  :default-checked-keys="checkedArr"
-  :props="defaultProps">
-</el-tree>
+      <!-- 树状 -->
+      <el-tree
+        class="tree"
+        ref="tree"
+        :data="rightData"
+        show-checkbox
+        node-key="id"
+        :default-expanded-keys="expandedArr"
+        :default-checked-keys="checkedArr"
+        :props="defaultProps"
+      ></el-tree>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="grantFormVisible = false">取 消</el-button>
+        <el-button type="primary" @click="confirmGrant()">确 定</el-button>
+      </div>
+    </el-dialog>
+    <!-- 添加角色弹框 -->
+    <el-dialog title="添加角色" :visible.sync="addFormVisible">
+  <el-form :model="addForm" label-width="120px" ref="addForm">
+    <el-form-item label="角色名称" >
+      <el-input v-model="addForm.roleName" autocomplete="off"></el-input>
+    </el-form-item>
+    <el-form-item label="角色描述" >
+      <el-input v-model="addForm.roleDesc" autocomplete="off"></el-input>
+    </el-form-item>
+  </el-form>
   <div slot="footer" class="dialog-footer">
-    <el-button @click="grantFormVisible = false">取 消</el-button>
-    <el-button type="primary" @click="confirmGrant()">确 定</el-button>
+    <el-button @click="addFormVisible = false">取 消</el-button>
+    <el-button type="primary" @click="confirmAddRole">确 定</el-button>
   </div>
 </el-dialog>
   </div>
@@ -103,11 +114,18 @@
 
 <script>
 // 引入roles.js
-import { getAllUserRole } from '@/api/roles.js'
+import { getAllUserRole, addRole, delRole } from '@/api/roles.js'
 import { delRightById, getRightInfo, grantRightById } from '@/api/right.js'
 export default {
   data () {
     return {
+      // 显示隐藏添加角色弹框
+      addFormVisible: false,
+      // 添加角色数据
+      addForm: {
+        roleName: '',
+        roleDesc: ''
+      },
       // 授权弹框显示隐藏
       grantFormVisible: false,
       // 授权弹框的默认数据
@@ -127,6 +145,69 @@ export default {
     }
   },
   methods: {
+    // 显示隐藏删除弹框
+     del(row) {
+        this.$confirm('此操作将永久删除该文件, 是否继续?', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        })
+        .then(() => {
+          // 发送请求删除
+          delRole(row.id)
+          .then(res => {
+            if(res.data.meta.status===200){
+              this.$message({
+                type:'success',
+                message:res.data.meta.msg
+              })
+              this.init()
+            }else{
+                this.$message({
+                type:'error',
+                message:res.data.meta.msg
+              })
+            }
+          })
+        })
+        .catch(() => {
+          this.$message({
+            type: 'info',
+            message: '已取消删除'
+          });          
+        });
+      },
+    // 添加角色
+    confirmAddRole () {
+      // 发送请求添加角色
+      addRole(this.addForm)
+        .then(res => {
+          console.log(res)
+          if (res.data.meta.status === 201) {
+            this.$message({
+              type: 'success',
+              message: res.data.meta.msg
+            })
+            // 弹框消失
+            this.addFormVisible = false
+            // 清空输入框
+            this.$refs.addForm.resetFields()
+            // 刷新
+            this.init()
+          } else {
+            this.$message({
+              type: 'error',
+              message: res.data.meta.msg
+            })
+          }
+        })
+        .catch(() => {
+          this.$message({
+            type: 'error',
+            message: '服务器异常，请重试'
+          })
+        })
+    },
     editRole (row) {
       console.log(row)
     },
@@ -135,7 +216,6 @@ export default {
       // 发送请求 获取所有的roles信息
       getAllUserRole()
         .then(res => {
-          console.log(res)
           if (res.data.meta.status === 200) {
             this.rolesData = res.data.data
           } else {
@@ -145,8 +225,11 @@ export default {
             })
           }
         })
-        .catch(err => {
-          console.log(err)
+        .catch(() => {
+          this.$message({
+            type: 'error',
+            message: '服务器异常，请重试'
+          })
         })
     },
     // 扩展区域的关闭标签
@@ -186,9 +269,9 @@ export default {
       this.checkedArr.length = 0
       this.expandedArr.length = 0
       // 展开 并选中当前角色所有的权限选项
-      row.children.forEach((first) => {
+      row.children.forEach(first => {
         if (first.children.length > 0) {
-        // 遍历二级权限
+          // 遍历二级权限
           this.expandedArr.push(first.id)
           first.children.forEach(second => {
             if (second.children.length > 0) {
@@ -237,7 +320,7 @@ export default {
             })
             // 弹框隐藏
             this.grantFormVisible = false
-          // 刷新数据 小标签
+            // 刷新数据 小标签
           } else {
             this.$message({
               type: 'error',
@@ -259,8 +342,7 @@ export default {
 }
 </script>
 <style lang="less" scoped>
-
-.tree{
+.tree {
   height: 300px;
   overflow: scroll;
 }

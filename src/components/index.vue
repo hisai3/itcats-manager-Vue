@@ -4,7 +4,7 @@
       <el-aside width="200px">
         <div class="logo"></div>
         <el-menu
-        :router='true'
+          :router="true"
           :unique-opened="true"
           default-active="2"
           class="el-menu-vertical-demo"
@@ -12,33 +12,19 @@
           text-color="#fff"
           active-text-color="#ffd04b"
         >
-          <el-submenu index="1">
+          <el-submenu :index="first.order+''" v-for="first in navMenuData" :key="first.id">
             <template slot="title">
               <i class="el-icon-location"></i>
-              <span>用户管理</span>
+              <span>{{first.authName}}</span>
             </template>
-            <el-menu-item index="/index/users">
+            <el-menu-item
+              :index="'/index/'+second.path"
+              v-for="second in first.children"
+              :key="second.id"
+            >
               <template slot="title">
                 <i class="el-icon-location"></i>
-                <span>用户列表</span>
-              </template>
-            </el-menu-item>
-          </el-submenu>
-          <el-submenu index="2">
-            <template slot="title">
-              <i class="el-icon-location"></i>
-              <span>权限管理</span>
-            </template>
-            <el-menu-item index="/index/roles">
-              <template slot="title">
-                <i class="el-icon-location"></i>
-                <span>角色列表</span>
-              </template>
-            </el-menu-item>
-            <el-menu-item index="/index/right">
-              <template slot="title">
-                <i class="el-icon-location"></i>
-                <span>权限列表</span>
+                <span>{{second.authName}}</span>
               </template>
             </el-menu-item>
           </el-submenu>
@@ -62,7 +48,35 @@
 </template>
 
 <script>
-export default {}
+import { getLeftMenu } from '@/api/right.js'
+export default {
+  data () {
+    return {
+      navMenuData: []
+    }
+  },
+  mounted () {
+    // 获取左侧导航菜单数据
+    getLeftMenu()
+      .then(res => {
+        console.log(res)
+        if (res.data.meta.status === 200) {
+          this.navMenuData = res.data.data
+        } else {
+          this.$message({
+            type: 'error',
+            message: '服务器异常，请重试'
+          })
+        }
+      })
+      .catch(() => {
+        this.$message({
+          type: 'error',
+          message: '服务器异常，请重试'
+        })
+      })
+  }
+}
 </script>
 <style lang="less" scoped>
 .home {

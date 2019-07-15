@@ -20,3 +20,10 @@ export const grantRightById = (roleid, rids) => {
     data: { rids }
   })
 }
+
+// 获取左侧菜单权限
+export const getLeftMenu = () => {
+  return axios({
+    url: `menus`
+  })
+}
